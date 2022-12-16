@@ -7,11 +7,18 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
-type Last<T extends Array<unknown>> = T extends [
+type Last_1<T extends Array<unknown>> = T extends [
   infer ElementType,
   ...infer Rest
 ]
   ? Rest extends []
     ? ElementType
     : Last<Rest>
+  : never;
+
+type Last<T extends Array<unknown>> = T extends [
+  ...infer Rest,
+  infer ElementType
+]
+  ? ElementType
   : never;
