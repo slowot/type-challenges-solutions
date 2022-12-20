@@ -25,17 +25,21 @@ type Falsy =
   | false
   | []
   | undefined
-  | null; /* {} is special. eg: 1 extends {} is true */
-type AnyOf<T extends Array<unknown>> = AnyOfCore<T> extends []
-  ? false
-  : Equal<AnyOfCore<T>, [{}]> extends true
-  ? false
-  : true;
-type AnyOfCore<T extends Array<unknown>> = T extends [
+  | null
+  | Record<
+      string | number | symbol,
+      never
+    >; /* {} is special. eg: 1 extends {} is true.*/
+type test = Equal<
+  Record<string | number | symbol, never>,
+  { [key: string | number | symbol]: never }
+>; // true
+
+type AnyOf<T extends Array<unknown>> = T extends [
   infer ElementType,
   ...infer Rest
 ]
   ? ElementType extends Falsy
-    ? AnyOfCore<Rest>
-    : [ElementType, ...AnyOfCore<Rest>]
-  : T;
+    ? AnyOf<Rest>
+    : true
+  : false;
