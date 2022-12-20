@@ -14,15 +14,8 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
-type KebabCase<S extends string> = S extends KebabCaseCore<S>
-  ? S
-  : RemoveHeadDash<KebabCaseCore<S>>;
-type RemoveHeadDash<S extends string> = S extends `-${infer Rest}` ? Rest : S;
-type KebabCaseCore<S extends string> =
-  S extends `${infer ElementType}${infer Rest}`
-    ? ElementType extends Uppercase<ElementType>
-      ? ElementType extends Lowercase<ElementType>
-        ? `${ElementType}${KebabCaseCore<Rest>}`
-        : `-${Lowercase<ElementType>}${KebabCaseCore<Rest>}`
-      : `${ElementType}${KebabCaseCore<Rest>}`
-    : S;
+type KebabCase<S extends string> = S extends `${infer ElementType}${infer Rest}`
+  ? Rest extends Uncapitalize<Rest>
+    ? `${Uncapitalize<ElementType>}${KebabCase<Rest>}`
+    : `${Uncapitalize<ElementType>}-${KebabCase<Rest>}`
+  : S;
