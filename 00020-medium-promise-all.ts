@@ -17,7 +17,5 @@ type cases = [
 declare function PromiseAll<T extends Array<unknown>>(
   values: readonly [...T]
 ): Promise<{
-  [K in keyof T]: T[K] extends Promise<infer Value>
-    ? Value
-    : Exclude<T[K], Promise<unknown>>;
+  [K in keyof T]: Awaited<T[K]>;
 }>;
