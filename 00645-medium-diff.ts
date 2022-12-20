@@ -23,13 +23,7 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
-type a = 1 | 2;
-type b = 1 | 3;
-type c = a & b;
-type Diff<T, U> = {
-  [K in Exclude<keyof T | keyof U, keyof T & keyof U>]: K extends keyof T
-    ? T[K]
-    : K extends keyof U
-    ? U[K]
-    : never;
-};
+type a = { 1: 1 };
+type b = { 1: 2; 2: 3 };
+type ss = keyof (a | b);
+type Diff<T, U> = Omit<T & U, keyof (T | U)>;
