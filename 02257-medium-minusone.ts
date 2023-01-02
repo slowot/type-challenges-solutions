@@ -15,7 +15,7 @@ type NumberToString<N extends number> = `${N}`;
 type ParseInt<T extends string> =
   RemoveExtraChar<T> extends `${infer Digit extends number}`
     ? Digit
-    : "Not a Number";
+    : "[ParseInt]: Not a Number";
 type testParseInt = ParseInt<"+100h001">;
 type ReverseString<S extends string> = S extends `${infer First}${infer Rest}`
   ? `${ReverseString<Rest>}${First}`
@@ -29,26 +29,28 @@ type RemoveExtraChar<S extends string> = S extends `${"" | "+" | "-"}0`
   ? `${First}${Rest}`
   : S;
 type testRemoveExtraChar = RemoveExtraChar<"+1000001">;
-type InternalPlusOne<N extends number> = ReverseString<
-  InternalPlusOneCore<ReverseString<NumberToString<N>>>
->;
-type InternalMinusOne<N extends number> = ReverseString<
-  InternalMinusOneCore<ReverseString<NumberToString<N>>>
->;
+type InternalPlusOne<N extends number> =
+  /* Only positive numbers and 0 should be handled, negative numbers should be treated as invalid input */
+  ExtractNumber<N>[0] extends "-"
+    ? "[InternalPlusOne]: Invalid Input"
+    : ReverseString<InternalPlusOneCore<ReverseString<NumberToString<N>>>>;
+type InternalMinusOne<N extends number> =
+  /* Only positive numbers should be handled, 0 and negative numbers should be treated as illegal input */
+  ExtractNumber<N>[0] extends "+"
+    ? ReverseString<InternalMinusOneCore<ReverseString<NumberToString<N>>>>
+    : "[InternalMinusOne]: Invalid Input";
 type InternalPlusOneCore<S extends string> =
-  /* 只应该处理 正数 和 0, 负数 应该视为非法输入 */
   S extends `${infer Digit extends number}${infer Rest}`
     ? Digit extends 9
       ? `0${InternalPlusOneCore<Rest>}`
       : `${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0][Digit]}${Rest}`
     : "1";
 type InternalMinusOneCore<S extends string> =
-  /* 只应该处理正数, 0 和 负数 应该视为非法输入 */
   S extends `${infer Digit extends number}${infer Rest}`
     ? Digit extends 0
       ? `9${InternalMinusOneCore<Rest>}`
       : `${[9, 0, 1, 2, 3, 4, 5, 6, 7, 8][Digit]}${Rest}`
-    : "Error Special Minus";
+    : "[InternalMinusOneCore]: InternalMinusOneCore can only be used in InternalMinusOne";
 
 type ExtractNumberType = ["", 0] | ["-" | "+", number];
 type ExtractNumber<N extends number> = N extends 0
@@ -66,7 +68,7 @@ type PlusOrMinusOne<
   ? ParseInt<`${Sign extends OppositeOption
       ? `${OppositeOption}${InternalMinusOne<Digit>}`
       : `${Option}${InternalPlusOne<Digit>}`}`>
-  : "Error";
+  : "[PlusOrMinusOne]: Error";
 type MinusOne<N extends number> = PlusOrMinusOne<ExtractNumber<N>, "-">;
 type PlusOne<N extends number> = PlusOrMinusOne<ExtractNumber<N>, "+">;
 
