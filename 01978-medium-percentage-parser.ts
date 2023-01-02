@@ -30,13 +30,10 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
-type test = PercentageParser<"">;
 type PercentageParser<S extends string, Flag = false> = Flag extends false
-  ? S extends `${infer First}${infer Rest}`
-    ? First extends "-" | "+"
-      ? PercentageParser<Rest, First>
-      : PercentageParser<S, "">
-    : ["", "", ""]
+  ? S extends `${infer First extends "-" | "+"}${infer Rest}`
+    ? PercentageParser<Rest, First>
+    : PercentageParser<S, "">
   : S extends `${infer Rest}%`
   ? [Flag, Rest, "%"]
   : [Flag, S, ""];
