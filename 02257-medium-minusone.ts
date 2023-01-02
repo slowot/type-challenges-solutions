@@ -49,36 +49,26 @@ type InternalMinusOneCore<S extends string> =
       ? `9${InternalMinusOneCore<Rest>}`
       : `${[9, 0, 1, 2, 3, 4, 5, 6, 7, 8][Digit]}${Rest}`
     : "Error Special Minus";
+
+type ExtractNumberType = ["", 0] | ["-" | "+", number];
 type ExtractNumber<N extends number> = N extends 0
   ? ["", 0]
   : `${N}` extends `-${infer Digit extends number}`
   ? ["-", Digit]
   : ["+", N];
 
-type ExtractNumberType = ["", 0] | ["-" | "+", number];
-type MinusOneCore<T extends ExtractNumberType> = T extends [
-  infer Sign extends "" | "-" | "+",
-  infer Num extends number
-]
-  ? ParseInt<`${Sign extends "+"
-      ? InternalMinusOne<Num>
-      : `-${InternalPlusOne<Num>}`}`>
-  : "Error";
-type PlusOneCore<T extends ExtractNumberType> = T extends [
-  infer Sign extends "" | "-" | "+",
-  infer Num extends number
-]
-  ? ParseInt<`${Sign extends "-"
-      ? `-${InternalMinusOne<Num>}`
-      : InternalPlusOne<Num>}`>
-  : "Error";
-
+type PlusOrMinusOption = "+" | "-";
 type PlusOrMinusOne<
   T extends ExtractNumberType,
-  Option extends "+" | "-"
-> = any; // 待实现
-type MinusOne<N extends number> = MinusOneCore<ExtractNumber<N>>;
-type PlusOne<N extends number> = PlusOneCore<ExtractNumber<N>>;
+  Option extends PlusOrMinusOption,
+  OppositeOption extends PlusOrMinusOption = Exclude<PlusOrMinusOption, Option>
+> = T extends [infer Sign extends "" | "-" | "+", infer Digit extends number]
+  ? ParseInt<`${Sign extends OppositeOption
+      ? `${OppositeOption}${InternalMinusOne<Digit>}`
+      : `${Option}${InternalPlusOne<Digit>}`}`>
+  : "Error";
+type MinusOne<N extends number> = PlusOrMinusOne<ExtractNumber<N>, "-">;
+type PlusOne<N extends number> = PlusOrMinusOne<ExtractNumber<N>, "+">;
 
 type testMinus0 = MinusOne<-0>;
 type testMinus1 = MinusOne<0>;
