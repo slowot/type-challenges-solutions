@@ -11,15 +11,20 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
+type PlusOrMinusOption = "+" | "-";
+type ExtractNumberType = ["", 0] | ["-" | "+", number];
+
 type NumberToString<N extends number> = `${N}`;
-type ParseInt<T extends string> =
-  RemoveExtraChar<T> extends `${infer Digit extends number}`
-    ? Digit
-    : "[ParseInt]: Not a Number";
-type testParseInt = ParseInt<"+100h001">;
+
 type ReverseString<S extends string> = S extends `${infer First}${infer Rest}`
   ? `${ReverseString<Rest>}${First}`
   : "";
+
+type ExtractNumber<N extends number> = N extends 0
+  ? ["", 0]
+  : `${N}` extends `-${infer Digit extends number}`
+  ? ["-", Digit]
+  : ["+", N];
 
 type RemoveExtraChar<S extends string> = S extends `${"" | "+" | "-"}0`
   ? "0"
@@ -28,23 +33,18 @@ type RemoveExtraChar<S extends string> = S extends `${"" | "+" | "-"}0`
   : S extends `${"+"}${infer First extends number}${infer Rest}`
   ? `${First}${Rest}`
   : S;
-type testRemoveExtraChar = RemoveExtraChar<"+1000001">;
-type InternalPlusOne<N extends number> =
-  /* Only positive numbers and 0 should be handled, negative numbers should be treated as invalid input */
-  ExtractNumber<N>[0] extends "-"
-    ? "[InternalPlusOne]: Invalid Input"
-    : ReverseString<InternalPlusOneCore<ReverseString<NumberToString<N>>>>;
-type InternalMinusOne<N extends number> =
-  /* Only positive numbers should be handled, 0 and negative numbers should be treated as illegal input */
-  ExtractNumber<N>[0] extends "+"
-    ? ReverseString<InternalMinusOneCore<ReverseString<NumberToString<N>>>>
-    : "[InternalMinusOne]: Invalid Input";
+type ParseInt<T extends string> =
+  RemoveExtraChar<T> extends `${infer Digit extends number}`
+    ? Digit
+    : "[ParseInt]: Not a Number";
+
 type InternalPlusOneCore<S extends string> =
   S extends `${infer Digit extends number}${infer Rest}`
     ? Digit extends 9
       ? `0${InternalPlusOneCore<Rest>}`
       : `${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0][Digit]}${Rest}`
     : "1";
+
 type InternalMinusOneCore<S extends string> =
   S extends `${infer Digit extends number}${infer Rest}`
     ? Digit extends 0
@@ -52,14 +52,18 @@ type InternalMinusOneCore<S extends string> =
       : `${[9, 0, 1, 2, 3, 4, 5, 6, 7, 8][Digit]}${Rest}`
     : "[InternalMinusOneCore]: InternalMinusOneCore can only be used in InternalMinusOne";
 
-type ExtractNumberType = ["", 0] | ["-" | "+", number];
-type ExtractNumber<N extends number> = N extends 0
-  ? ["", 0]
-  : `${N}` extends `-${infer Digit extends number}`
-  ? ["-", Digit]
-  : ["+", N];
+type InternalPlusOne<N extends number> =
+  /* Only positive numbers and 0 should be handled, negative numbers should be treated as invalid input */
+  ExtractNumber<N>[0] extends "-"
+    ? "[InternalPlusOne]: Invalid Input"
+    : ReverseString<InternalPlusOneCore<ReverseString<NumberToString<N>>>>;
 
-type PlusOrMinusOption = "+" | "-";
+type InternalMinusOne<N extends number> =
+  /* Only positive numbers should be handled, 0 and negative numbers should be treated as illegal input */
+  ExtractNumber<N>[0] extends "+"
+    ? ReverseString<InternalMinusOneCore<ReverseString<NumberToString<N>>>>
+    : "[InternalMinusOne]: Invalid Input";
+
 type PlusOrMinusOne<
   T extends ExtractNumberType,
   Option extends PlusOrMinusOption,
@@ -69,21 +73,6 @@ type PlusOrMinusOne<
       ? `${OppositeOption}${InternalMinusOne<Digit>}`
       : `${Option}${InternalPlusOne<Digit>}`}`>
   : "[PlusOrMinusOne]: Error";
+
 type MinusOne<N extends number> = PlusOrMinusOne<ExtractNumber<N>, "-">;
 type PlusOne<N extends number> = PlusOrMinusOne<ExtractNumber<N>, "+">;
-
-type testMinus0 = MinusOne<-0>;
-type testMinus1 = MinusOne<0>;
-type testMinus2 = MinusOne<-1>;
-type testMinus3 = MinusOne<-2>;
-type testMinus4 = MinusOne<1>;
-type testMinus5 = MinusOne<9>;
-type testMinus6 = MinusOne<19>;
-
-type testPlus0 = PlusOne<-0>;
-type testPlus1 = PlusOne<0>;
-type testPlus2 = PlusOne<-1>;
-type testPlus3 = PlusOne<-2>;
-type testPlus4 = PlusOne<1>;
-type testPlus5 = PlusOne<9>;
-type testPlus6 = PlusOne<19>;
