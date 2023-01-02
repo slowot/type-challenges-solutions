@@ -22,8 +22,8 @@ type ReverseString<S extends string> = S extends `${infer First}${infer Rest}`
 
 type ExtractNumber<N extends number> = N extends 0
   ? ["", 0]
-  : `${N}` extends `-${infer Digit extends number}`
-  ? ["-", Digit]
+  : `${N}` extends `-${infer Integer extends number}`
+  ? ["-", Integer]
   : ["+", N];
 
 type RemoveExtraChar<S extends string> = S extends `${"" | "+" | "-"}0`
@@ -34,8 +34,8 @@ type RemoveExtraChar<S extends string> = S extends `${"" | "+" | "-"}0`
   ? `${First}${Rest}`
   : S;
 type ParseInt<T extends string> =
-  RemoveExtraChar<T> extends `${infer Digit extends number}`
-    ? Digit
+  RemoveExtraChar<T> extends `${infer Integer extends number}`
+    ? Integer
     : "[ParseInt]: Not a Number";
 
 type InternalPlusOneCore<S extends string> =
@@ -68,10 +68,10 @@ type PlusOrMinusOne<
   T extends ExtractNumberType,
   Option extends PlusOrMinusOption,
   OppositeOption extends PlusOrMinusOption = Exclude<PlusOrMinusOption, Option>
-> = T extends [infer Sign extends "" | "-" | "+", infer Digit extends number]
+> = T extends [infer Sign extends "" | "-" | "+", infer Integer extends number]
   ? ParseInt<`${Sign extends OppositeOption
-      ? `${OppositeOption}${InternalMinusOne<Digit>}`
-      : `${Option}${InternalPlusOne<Digit>}`}`>
+      ? `${OppositeOption}${InternalMinusOne<Integer>}`
+      : `${Option}${InternalPlusOne<Integer>}`}`>
   : "[PlusOrMinusOne]: Error";
 
 type MinusOne<N extends number> = PlusOrMinusOne<ExtractNumber<N>, "-">;
