@@ -28,13 +28,22 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
+type ExtraCase = {
+  name: "Jack";
+  age?: 36;
+  say: "Hello";
+};
+type ExtraCaseExpected = {
+  name?: "Jack";
+  age?: 36;
+  say: "Hello";
+};
+type ActualResult = PartialByKeys<ExtraCase, "name">;
+type SpecialCase = Expect<Equal<ActualResult, ExtraCaseExpected>>;
+
 type Flatten<T> = {
   [K in keyof T]: T[K];
 };
 type PartialByKeys<T, P extends keyof T = keyof T> = Flatten<
-  {
-    [K in P]?: T[K];
-  } & {
-    [K in Exclude<keyof T, P>]: T[K];
-  }
+  { [K in P]?: T[K] } & Omit<T, P>
 >;
