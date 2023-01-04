@@ -28,9 +28,22 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
+type ExtraCase = {
+  name?: "Jack";
+  age?: 36;
+  say: "Hello";
+};
+type ExtraCaseExpected = {
+  name: "Jack";
+  age?: 36;
+  say: "Hello";
+};
+type ActualResult = RequiredByKeys<ExtraCase, "name">;
+type SpecialCase = Expect<Equal<ActualResult, ExtraCaseExpected>>;
+
 type Flatten<T> = {
   [K in keyof T]: T[K];
 };
 type RequiredByKeys<T, P extends keyof T = keyof T> = Flatten<
-  T & { [K in P]-?: T[K] }
+  { [K in P]-?: T[K] } & Omit<T, P>
 >;
