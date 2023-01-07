@@ -11,16 +11,6 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
-type ToString<T> = T extends
-  | string
-  | number
-  | bigint
-  | boolean
-  | null
-  | undefined
-  ? `${T}`
-  : "[ToString]: Error";
-
-type Flip<T extends object> = {
-  [K in keyof T as T[K] extends keyof any ? T[K] : ToString<T[K]>]: K;
+type Flip<T extends Record<keyof any, any>> = {
+  [K in keyof T as `${T[K]}`]: K;
 };
