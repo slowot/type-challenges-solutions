@@ -14,6 +14,16 @@ type cases = [
 type PlusOrMinusOption = "+" | "-";
 type ExtractNumberType = ["", 0] | ["-" | "+", number];
 
+type OptionXNOR<
+  Left extends PlusOrMinusOption,
+  Right extends PlusOrMinusOption
+> = Left extends Right ? "+" : "-";
+
+type OptionNot<Option extends PlusOrMinusOption> = Exclude<
+  PlusOrMinusOption,
+  Option
+>;
+
 type NumberToString<N extends number> = `${N}`;
 
 type ReverseString<S extends string> = S extends `${infer First}${infer Rest}`
@@ -66,14 +76,12 @@ type InternalMinusOne<N extends number> =
 
 type PlusOrMinusOne<
   N extends number,
-  Option extends PlusOrMinusOption,
-  OppositeOption extends PlusOrMinusOption = Exclude<PlusOrMinusOption, Option>,
-  T extends ExtractNumberType = ExtractNumber<N>
-> = T extends [infer Sign extends "" | "-" | "+", infer Integer extends number]
-  ? ParseInt<`${Sign extends OppositeOption
-      ? `${OppositeOption}${InternalMinusOne<Integer>}`
-      : `${Option}${InternalPlusOne<Integer>}`}`>
-  : "[PlusOrMinusOne]: Error";
+  Option extends PlusOrMinusOption
+> = ParseInt<
+  ExtractNumber<N>[0] extends OptionNot<Option>
+    ? `${OptionNot<Option>}${InternalMinusOne<ExtractNumber<N>[1]>}`
+    : `${Option}${InternalPlusOne<ExtractNumber<N>[1]>}`
+>;
 
 type MinusOne<N extends number> = PlusOrMinusOne<N, "-">;
 type PlusOne<N extends number> = PlusOrMinusOne<N, "+">;
