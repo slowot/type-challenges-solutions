@@ -46,7 +46,7 @@ type RemoveExtraChar<S extends string> = S extends `${"" | "+" | "-"}0`
 type ParseInt<T extends string> =
   RemoveExtraChar<T> extends `${infer Integer extends number}`
     ? Integer
-    : "[ParseInt]: Not a Number";
+    : never;
 
 type InternalPlusOneCore<S extends string> =
   S extends `${infer Digit extends number}${infer Rest}`
@@ -85,3 +85,27 @@ type PlusOrMinusOne<
 
 type MinusOne<N extends number> = PlusOrMinusOne<N, "-">;
 type PlusOne<N extends number> = PlusOrMinusOne<N, "+">;
+
+type PlusOrMinus<
+  Left extends number,
+  Right extends number,
+  Option extends PlusOrMinusOption
+> = ExtractNumber<Right>[0] extends PlusOrMinusOption
+  ? PlusOrMinus<
+      PlusOrMinusOne<Left, OptionXNOR<ExtractNumber<Right>[0], Option>>,
+      PlusOrMinusOne<Right, OptionNot<ExtractNumber<Right>[0]>>,
+      Option
+    >
+  : Left;
+
+type Plus<Left extends number, Right extends number> = PlusOrMinus<
+  Left,
+  Right,
+  "+"
+>;
+
+type Minus<Left extends number, Right extends number> = PlusOrMinus<
+  Left,
+  Right,
+  "-"
+>;
