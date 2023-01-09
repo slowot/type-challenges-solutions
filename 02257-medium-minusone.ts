@@ -65,14 +65,15 @@ type InternalMinusOne<N extends number> =
     : "[InternalMinusOne]: Invalid Input";
 
 type PlusOrMinusOne<
-  T extends ExtractNumberType,
+  N extends number,
   Option extends PlusOrMinusOption,
-  OppositeOption extends PlusOrMinusOption = Exclude<PlusOrMinusOption, Option>
+  OppositeOption extends PlusOrMinusOption = Exclude<PlusOrMinusOption, Option>,
+  T extends ExtractNumberType = ExtractNumber<N>
 > = T extends [infer Sign extends "" | "-" | "+", infer Integer extends number]
   ? ParseInt<`${Sign extends OppositeOption
       ? `${OppositeOption}${InternalMinusOne<Integer>}`
       : `${Option}${InternalPlusOne<Integer>}`}`>
   : "[PlusOrMinusOne]: Error";
 
-type MinusOne<N extends number> = PlusOrMinusOne<ExtractNumber<N>, "-">;
-type PlusOne<N extends number> = PlusOrMinusOne<ExtractNumber<N>, "+">;
+type MinusOne<N extends number> = PlusOrMinusOne<N, "-">;
+type PlusOne<N extends number> = PlusOrMinusOne<N, "+">;
