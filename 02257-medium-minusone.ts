@@ -109,3 +109,59 @@ type Minus<Left extends number, Right extends number> = PlusOrMinus<
   Right,
   "-"
 >;
+
+type SinglePlus<Left extends number, Right extends number> = Right extends 0
+  ? Left
+  : SinglePlus<PlusOne<Left>, MinusOne<Right>>;
+
+type PreFormatNumber<
+  Left extends number,
+  Right extends number
+> = PreFormatNumberCore<
+  ReverseString<NumberToString<Left>>,
+  ReverseString<NumberToString<Right>>
+>;
+
+type PreFormatNumberCore<
+  Left extends string,
+  Right extends string,
+  LResult extends string = "",
+  RResult extends string = ""
+> = Left extends `${infer LDigit extends number}${infer LRest}`
+  ? Right extends `${infer RDigit extends number}${infer RRest}`
+    ? PreFormatNumberCore<
+        LRest,
+        RRest,
+        `${LResult}${LDigit}`,
+        `${RResult}${RDigit}`
+      >
+    : PreFormatNumberCore<Left, "0", LResult, RResult>
+  : Right extends `${infer RDigit extends number}${infer RRest}`
+  ? PreFormatNumberCore<"0", Right, LResult, RResult>
+  : [LResult, RResult];
+
+type BetterPlusCore<
+  Left extends string,
+  Right extends string,
+  Carry extends 0 | 1 = 0,
+  Result extends string = ""
+> = Left extends `${infer LDigit extends number}${infer LRest}`
+  ? Right extends `${infer RDigit extends number}${infer RRest}`
+    ? NumberToString<
+        SinglePlus<SinglePlus<LDigit, RDigit>, Carry>
+      > extends `1${infer Digit extends number}`
+      ? `${Result}${Digit}${BetterPlusCore<LRest, RRest, 1>}`
+      : `${Result}${SinglePlus<
+          SinglePlus<LDigit, RDigit>,
+          Carry
+        >}${BetterPlusCore<LRest, RRest, 0>}`
+    : "Error: never"
+  : `${Result}${Carry extends 1 ? "1" : ""}`;
+
+type BetterPlus<
+  Left extends number,
+  Right extends number,
+  Temp extends [string, string] = PreFormatNumber<Left, Right>
+> = ParseInt<ReverseString<BetterPlusCore<Temp[0], Temp[1]>>>;
+
+type sfds = BetterPlus<1, 10>;
