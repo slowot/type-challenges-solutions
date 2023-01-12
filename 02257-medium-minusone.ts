@@ -13,6 +13,7 @@ type cases = [
 // ============= Your Code Here =============
 type PlusOrMinusOption = "+" | "-";
 type ExtractNumberType = ["", 0] | ["-" | "+", number];
+type CarryType = 0 | -1 | 1;
 
 type OptionXNOR<
   Left extends PlusOrMinusOption,
@@ -23,6 +24,11 @@ type OptionNot<Option extends PlusOrMinusOption> = Exclude<
   PlusOrMinusOption,
   Option
 >;
+
+type NegativeNumber<N extends number> =
+  NumberToString<N> extends `-${infer Integer extends number}`
+    ? Integer
+    : ParseInt<`-${N}`>;
 
 type NumberToString<N extends number> = `${N}`;
 
@@ -110,10 +116,6 @@ type Minus<Left extends number, Right extends number> = PlusOrMinus<
   "-"
 >;
 
-type SinglePlus<Left extends number, Right extends number> = Right extends 0
-  ? Left
-  : SinglePlus<PlusOne<Left>, MinusOne<Right>>;
-
 type PreFormatNumber<
   Left extends number,
   Right extends number
@@ -140,28 +142,95 @@ type PreFormatNumberCore<
   ? PreFormatNumberCore<"0", Right, LResult, RResult>
   : [LResult, RResult];
 
-type BetterPlusCore<
-  Left extends string,
-  Right extends string,
-  Carry extends 0 | 1 = 0,
-  Result extends string = ""
-> = Left extends `${infer LDigit extends number}${infer LRest}`
-  ? Right extends `${infer RDigit extends number}${infer RRest}`
-    ? NumberToString<
-        SinglePlus<SinglePlus<LDigit, RDigit>, Carry>
-      > extends `1${infer Digit extends number}`
-      ? `${Result}${Digit}${BetterPlusCore<LRest, RRest, 1>}`
-      : `${Result}${SinglePlus<
-          SinglePlus<LDigit, RDigit>,
-          Carry
-        >}${BetterPlusCore<LRest, RRest, 0>}`
-    : "Error: never"
-  : `${Result}${Carry extends 1 ? "1" : ""}`;
+type SimplePlus<
+  LeftMinusOne extends number,
+  RightPlusOne extends number,
+  LeftPlusOne extends number = LeftMinusOne,
+  RightMinusOne extends number = RightPlusOne
+> = LeftMinusOne extends 0
+  ? RightPlusOne
+  : RightMinusOne extends 0
+  ? LeftPlusOne
+  : SimplePlus<
+      MinusOne<LeftMinusOne>,
+      PlusOne<RightPlusOne>,
+      PlusOne<LeftPlusOne>,
+      MinusOne<RightMinusOne>
+    >; /* type system can only repeat 999 times, so SimplePlusCore<1000, 1000> wiil throw a error */
 
-type BetterPlus<
+type fsdf = SimpleMinus<3, 32>;
+type SimpleMinus<Left extends number, Right extends number> = SimplePlus<
+  Left,
+  NegativeNumber<Right>
+>;
+
+type ExtractDigit<Digit extends number> = ExtractNumber<Digit>[0] extends "-"
+  ? [-1, SimplePlus<10, Digit>]
+  : NumberToString<
+      ExtractNumber<Digit>[1]
+    > extends `1${infer NewDigit extends number}`
+  ? [1, NewDigit]
+  : [0, Digit];
+
+type CalculateDigit<
   Left extends number,
   Right extends number,
-  Temp extends [string, string] = PreFormatNumber<Left, Right>
-> = ParseInt<ReverseString<BetterPlusCore<Temp[0], Temp[1]>>>;
+  Carry extends CarryType,
+  Option extends PlusOrMinusOption
+> = Option extends "+"
+  ? ExtractDigit<SimplePlus<SimplePlus<Left, Right>, Carry>>
+  : ExtractDigit<SimplePlus<SimpleMinus<Left, Right>, Carry>>;
 
-type sfds = BetterPlus<1, 10>;
+type BetterPlus<Left extends number, Right extends number> = ParseInt<
+  ReverseString<BetterPlusCore<PreFormatNumber<Left, Right>>>
+>;
+
+// 需要 对负数进行反运算
+type BetterMinus<
+  Left extends number,
+  Right extends number,
+  Result = ParseInt<
+    ReverseString<BetterMinusCore<PreFormatNumber<Left, Right>>>
+  >
+> = [Result] extends [never]
+  ? NegativeNumber<BetterMinus<Right, Left>>
+  : Result;
+
+// 只处理正数
+type BetterMinusCore<
+  PreFormat extends [string, string],
+  Carry extends CarryType = 0
+> = PreFormat[0] extends `${infer LDigit extends number}${infer LRest}`
+  ? PreFormat[1] extends `${infer RDigit extends number}${infer RRest}`
+    ? `${CalculateDigit<LDigit, RDigit, Carry, "-">[1]}${BetterMinusCore<
+        [LRest, RRest],
+        CalculateDigit<LDigit, RDigit, Carry, "-">[0]
+      >}`
+    : "Error: never" /* 两个字符串已预处理为等长 不可能出现这种情况 */
+  : Carry extends -1
+  ? never
+  : "";
+
+// 只处理正数
+type BetterPlusCore<
+  PreFormat extends [string, string],
+  Carry extends CarryType = 0
+> = PreFormat[0] extends `${infer LDigit extends number}${infer LRest}`
+  ? PreFormat[1] extends `${infer RDigit extends number}${infer RRest}`
+    ? `${CalculateDigit<LDigit, RDigit, Carry, "+">[1]}${BetterPlusCore<
+        [LRest, RRest],
+        CalculateDigit<LDigit, RDigit, Carry, "+">[0]
+      >}`
+    : "Error: never" /* 两个字符串已预处理为等长 不可能出现这种情况 */
+  : Carry extends 1
+  ? "1"
+  : "";
+
+type fds = BetterPlus<8944394323791464, 7888788647582928>;
+type fs32 = BetterPlus<-32, 3>;
+type mi32 = BetterMinus<3, -32>;
+
+type step1 = PreFormatNumberCore<"3", "23">;
+type fddfs2 = BetterMinusCore<PreFormatNumber<3, 32>>;
+
+// 目前 BetterPlus BetterMinus 里面的left和right均只能为正数， 需要对传入的负数进行处理，反运算即可。 (-3 + -4) => -(3 + 4); (-3 + 4) => (4 - 3); (-3 - -4) => -(3 - 4)
