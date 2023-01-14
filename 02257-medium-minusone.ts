@@ -12,6 +12,7 @@ type cases = [
 
 // ============= Your Code Here =============
 type PlusOrMinusOption = "+" | "-";
+type SignType = "" | "-" | "+";
 type ExtractNumberType = ["", 0] | ["-" | "+", number];
 type CarryType = 0 | -1 | 1;
 
@@ -20,7 +21,7 @@ type OptionXNOR<
   Right extends PlusOrMinusOption
 > = Left extends Right ? "+" : "-";
 
-type OptionNot<Option extends PlusOrMinusOption> = Exclude<
+type OptionNOT<Option extends PlusOrMinusOption> = Exclude<
   PlusOrMinusOption,
   Option
 >;
@@ -84,45 +85,25 @@ type PlusOrMinusOne<
   N extends number,
   Option extends PlusOrMinusOption
 > = ParseInt<
-  ExtractNumber<N>[0] extends OptionNot<Option>
-    ? `${OptionNot<Option>}${InternalMinusOne<ExtractNumber<N>[1]>}`
+  ExtractNumber<N>[0] extends OptionNOT<Option>
+    ? `${OptionNOT<Option>}${InternalMinusOne<ExtractNumber<N>[1]>}`
     : `${Option}${InternalPlusOne<ExtractNumber<N>[1]>}`
 >;
 
 type MinusOne<N extends number> = PlusOrMinusOne<N, "-">;
 type PlusOne<N extends number> = PlusOrMinusOne<N, "+">;
 
-type PlusOrMinus<
-  Left extends number,
-  Right extends number,
-  Option extends PlusOrMinusOption
-> = ExtractNumber<Right>[0] extends PlusOrMinusOption
-  ? PlusOrMinus<
-      PlusOrMinusOne<Left, OptionXNOR<ExtractNumber<Right>[0], Option>>,
-      PlusOrMinusOne<Right, OptionNot<ExtractNumber<Right>[0]>>,
-      Option
-    >
-  : Left;
-
-type Plus<Left extends number, Right extends number> = PlusOrMinus<
-  Left,
-  Right,
-  "+"
->;
-
-type Minus<Left extends number, Right extends number> = PlusOrMinus<
-  Left,
-  Right,
-  "-"
->;
-
 type PreFormatNumber<
   Left extends number,
-  Right extends number
-> = PreFormatNumberCore<
-  ReverseString<NumberToString<Left>>,
-  ReverseString<NumberToString<Right>>
->;
+  Right extends number,
+  Reversed extends boolean = true,
+  Result extends [string, string] = PreFormatNumberCore<
+    ReverseString<NumberToString<Left>>,
+    ReverseString<NumberToString<Right>>
+  >
+> = Reversed extends true
+  ? Result
+  : [ReverseString<Result[0]>, ReverseString<Result[1]>];
 
 type PreFormatNumberCore<
   Left extends string,
@@ -156,7 +137,7 @@ type SimplePlus<
       PlusOne<RightPlusOne>,
       PlusOne<LeftPlusOne>,
       MinusOne<RightMinusOne>
-    >; /* type system can only repeat 999 times, so SimplePlusCore<1000, 1000> wiil throw a error */
+    >; /* type system can only repeat 999 times, so SimplePlus<1000, 1000> wiil throw a error */
 
 type fsdf = SimpleMinus<3, 32>;
 type SimpleMinus<Left extends number, Right extends number> = SimplePlus<
@@ -164,60 +145,169 @@ type SimpleMinus<Left extends number, Right extends number> = SimplePlus<
   NegativeNumber<Right>
 >;
 
-type ExtractDigit<Digit extends number> = ExtractNumber<Digit>[0] extends "-"
-  ? [-1, SimplePlus<10, Digit>]
+type ExtractDigit<N extends number> = ExtractNumber<N>[0] extends "-"
+  ? [-1, SimplePlus<10, N>]
   : NumberToString<
-      ExtractNumber<Digit>[1]
-    > extends `1${infer NewDigit extends number}`
-  ? [1, NewDigit]
-  : [0, Digit];
+      ExtractNumber<N>[1]
+    > extends `1${infer Digit extends DigitType}`
+  ? [1, Digit]
+  : [0, N];
 
 type CalculateDigit<
-  Left extends number,
-  Right extends number,
+  Left extends DigitType,
+  Right extends DigitType,
   Carry extends CarryType,
-  Option extends PlusOrMinusOption
+  Option extends PlusOrMinusOption,
+  NewLeft extends number = Carry extends -1
+    ? MinusOne<Left>
+    : Carry extends 1
+    ? PlusOne<Left>
+    : Left
 > = Option extends "+"
-  ? ExtractDigit<SimplePlus<SimplePlus<Left, Right>, Carry>>
-  : ExtractDigit<SimplePlus<SimpleMinus<Left, Right>, Carry>>;
+  ? ExtractDigit<SimplePlus<NewLeft, Right>>
+  : ExtractDigit<SimpleMinus<NewLeft, Right>>;
 
-type BetterPlus<Left extends number, Right extends number> = ParseInt<
-  ReverseString<BetterPlusCore<PreFormatNumber<Left, Right>>>
+type PlusABS<Left extends number, Right extends number> = ParseInt<
+  ReverseString<PlusABSCore<PreFormatNumber<Left, Right>>>
 >;
 
-// 需要 对负数进行反运算
-type BetterMinus<
+type Plus<
   Left extends number,
   Right extends number,
-  Result = ParseInt<
-    ReverseString<BetterMinusCore<PreFormatNumber<Left, Right>>>
-  >
-> = [Result] extends [never]
-  ? NegativeNumber<BetterMinus<Right, Left>>
-  : Result;
+  ExtractSign extends [SignType, SignType] = [
+    ExtractNumber<Left>[0],
+    ExtractNumber<Right>[0]
+  ],
+  ExtractABS extends [number, number] = [
+    ExtractNumber<Left>[1],
+    ExtractNumber<Right>[1]
+  ]
+> = Left extends 0
+  ? Right
+  : Right extends 0
+  ? Left
+  : ExtractSign extends ["-", "-"]
+  ? NegativeNumber<PlusABS<ExtractABS[0], ExtractABS[1]>>
+  : ExtractSign extends ["-", "+"]
+  ? MinusABS<ExtractABS[1], ExtractABS[0]>
+  : ExtractSign extends ["+", "-"]
+  ? MinusABS<ExtractABS[0], ExtractABS[1]>
+  : PlusABS<Left, Right>;
 
-// 只处理正数
-type BetterMinusCore<
+type Minus<
+  Left extends number,
+  Right extends number,
+  ExtractSign extends [SignType, SignType] = [
+    ExtractNumber<Left>[0],
+    ExtractNumber<Right>[0]
+  ],
+  ExtractABS extends [number, number] = [
+    ExtractNumber<Left>[1],
+    ExtractNumber<Right>[1]
+  ]
+> = Left extends 0
+  ? NegativeNumber<Right>
+  : Right extends 0
+  ? Left
+  : ExtractSign extends ["-", "-"]
+  ? MinusABS<ExtractABS[1], ExtractABS[0]>
+  : ExtractSign extends ["-", "+"]
+  ? NegativeNumber<PlusABS<ExtractABS[0], ExtractABS[1]>>
+  : ExtractSign extends ["+", "-"]
+  ? PlusABS<ExtractABS[0], ExtractABS[1]>
+  : MinusABS<Left, Right>;
+
+type MinusABS<Left extends number, Right extends number> = CompareABS<
+  Left,
+  Right
+> extends "<"
+  ? NegativeNumber<
+      ParseInt<ReverseString<MinusABSCore<PreFormatNumber<Right, Left>>>>
+    >
+  : ParseInt<ReverseString<MinusABSCore<PreFormatNumber<Left, Right>>>>;
+
+type MinusABSCore<
   PreFormat extends [string, string],
   Carry extends CarryType = 0
-> = PreFormat[0] extends `${infer LDigit extends number}${infer LRest}`
-  ? PreFormat[1] extends `${infer RDigit extends number}${infer RRest}`
-    ? `${CalculateDigit<LDigit, RDigit, Carry, "-">[1]}${BetterMinusCore<
-        [LRest, RRest],
-        CalculateDigit<LDigit, RDigit, Carry, "-">[0]
-      >}`
+> = PreFormat[0] extends `${infer LDigit extends DigitType}${infer LRest}`
+  ? PreFormat[1] extends `${infer RDigit extends DigitType}${infer RRest}`
+    ? CalculateDigit<LDigit, RDigit, Carry, "-"> extends [
+        infer NewCarry extends CarryType,
+        infer NewDigit extends DigitType
+      ]
+      ? `${NewDigit}${MinusABSCore<[LRest, RRest], NewCarry>}`
+      : "Error: never" /* 不可能走入此分支，此步只是为了存储 CalculateDigit 的结果 */
     : "Error: never" /* 两个字符串已预处理为等长 不可能出现这种情况 */
-  : Carry extends -1
-  ? never
   : "";
 
-// 只处理正数
-type BetterPlusCore<
-  PreFormat extends [string, string],
+type DigitType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+type IncrementDigitList = IncrementDigitListCore;
+type IncrementDigitListCore<
+  Iterator extends number = 0,
+  Result extends Array<unknown> = [Exclude<DigitType, 0>]
+> = Result[Iterator] extends never
+  ? Result
+  : IncrementDigitListCore<
+      PlusOne<Iterator>,
+      [...Result, Exclude<Result[Iterator], PlusOne<Iterator>>]
+    >;
+
+type CompareDigit<
+  Left extends DigitType,
+  Right extends DigitType
+> = Left extends IncrementDigitList[Right]
+  ? ">"
+  : Left extends Right
+  ? "="
+  : "<";
+
+type CompareNumber<
+  Left extends number,
+  Right extends number,
+  ExtractSign extends [SignType, SignType] = [
+    ExtractNumber<Left>[0],
+    ExtractNumber<Right>[0]
+  ],
+  ExtractABS extends [number, number] = [
+    ExtractNumber<Left>[1],
+    ExtractNumber<Right>[1]
+  ]
+> = Left extends Right
+  ? "="
+  : ExtractSign extends ["-", "-"]
+  ? Exclude<"<" | ">", CompareABS<ExtractABS[0], ExtractABS[1]>>
+  : ExtractSign extends ["-", "+" | ""]
+  ? "<"
+  : ExtractSign extends ["+" | "", "-"]
+  ? ">"
+  : CompareABS<ExtractABS[0], ExtractABS[1]>;
+
+type CompareABS<
+  Left extends number,
+  Right extends number,
+  PreFormated extends [string, string] = PreFormatNumber<Left, Right, false>
+> = Left extends Right
+  ? "="
+  : PreFormated[0] extends `${infer LDigit extends DigitType}${infer LRest}`
+  ? PreFormated[1] extends `${infer RDigit extends DigitType}${infer RRest}`
+    ? CompareDigit<LDigit, RDigit> extends "="
+      ? CompareABS<Left, Right, [LRest, RRest]>
+      : CompareDigit<LDigit, RDigit>
+    : ">" /* 两个字符串已预处理为等长 不可能出现这种情况 */
+  : "="; /* 两数相等，不可能出现此情况，最开始已经判断了左右是否相等。*/
+
+type SortNumber<
+  Left extends number,
+  Right extends number,
+  Option extends ">" | "<" = ">" // 默认降序
+> = CompareNumber<Left, Right> extends Option ? [Left, Right] : [Right, Left];
+
+type PlusABSCore<
+  PreFormated extends [string, string],
   Carry extends CarryType = 0
-> = PreFormat[0] extends `${infer LDigit extends number}${infer LRest}`
-  ? PreFormat[1] extends `${infer RDigit extends number}${infer RRest}`
-    ? `${CalculateDigit<LDigit, RDigit, Carry, "+">[1]}${BetterPlusCore<
+> = PreFormated[0] extends `${infer LDigit extends DigitType}${infer LRest}`
+  ? PreFormated[1] extends `${infer RDigit extends DigitType}${infer RRest}`
+    ? `${CalculateDigit<LDigit, RDigit, Carry, "+">[1]}${PlusABSCore<
         [LRest, RRest],
         CalculateDigit<LDigit, RDigit, Carry, "+">[0]
       >}`
@@ -226,11 +316,13 @@ type BetterPlusCore<
   ? "1"
   : "";
 
-type fds = BetterPlus<8944394323791464, 7888788647582928>;
-type fs32 = BetterPlus<-32, 3>;
-type mi32 = BetterMinus<3, -32>;
-
+type fds = Plus<8944394323791464, 7888788647582928>;
+type mi32 = Minus<894744, 785298>;
+type te32 = Minus<-8944394323791464, 7888788647582928>;
+type ki32 = Minus<4, 4>;
+type f93 = Plus<0, 0>;
+type k912 = CompareABS<894744, 888888>;
 type step1 = PreFormatNumberCore<"3", "23">;
-type fddfs2 = BetterMinusCore<PreFormatNumber<3, 32>>;
-
-// 目前 BetterPlus BetterMinus 里面的left和right均只能为正数， 需要对传入的负数进行处理，反运算即可。 (-3 + -4) => -(3 + 4); (-3 + 4) => (4 - 3); (-3 - -4) => -(3 - 4)
+type fk323 = SortNumber<-99, 999>;
+type fsd23334 = SortNumber<46, 45, "<">;
+type k343 = CompareDigit<5, 4>;
