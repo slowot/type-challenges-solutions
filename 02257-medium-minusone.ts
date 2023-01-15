@@ -61,16 +61,16 @@ type ExtractNumber<N extends number> = N extends 0
   ? ["-", Integer]
   : ["+", N];
 
-type RemoveExtraChar<S extends string> = S extends `${"" | "+" | "-"}0`
+type RemoveExtraChar<S extends string> = S extends `${SignType}0`
   ? "0"
-  : S extends `${infer First extends "" | "-" | "+"}0${infer Rest}`
-  ? RemoveExtraChar<`${First}${Rest}`>
-  : S extends `${"+"}${infer First extends number}${infer Rest}`
-  ? `${First}${Rest}`
+  : S extends `${infer Sign extends SignType}0${infer Rest}`
+  ? RemoveExtraChar<`${Sign}${Rest}`>
+  : S extends `${"+"}${infer Integer extends number}`
+  ? `${Integer}`
   : S;
 
-type ParseInt<T extends string> =
-  RemoveExtraChar<T> extends `${infer Integer extends number}`
+type ParseInt<S extends string> =
+  RemoveExtraChar<S> extends `${infer Integer extends number}`
     ? Integer
     : never;
 
@@ -192,39 +192,52 @@ type CompareDigit<
   : "<";
 
 // --- Core ---
-type InternalPlusOneCore<S extends string> =
-  S extends `${infer Digit extends number}${infer Rest}`
+type PlusABSOneCore<S extends string> =
+  S extends `${infer Digit extends DigitType}${infer Rest}`
     ? Digit extends 9
-      ? `0${InternalPlusOneCore<Rest>}`
+      ? `0${PlusABSOneCore<Rest>}`
       : `${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0][Digit]}${Rest}`
     : "1";
 
-type InternalMinusOneCore<S extends string> =
-  S extends `${infer Digit extends number}${infer Rest}`
-    ? Digit extends 0
-      ? `9${InternalMinusOneCore<Rest>}`
-      : `${[9, 0, 1, 2, 3, 4, 5, 6, 7, 8][Digit]}${Rest}`
-    : "[InternalMinusOneCore]: InternalMinusOneCore can only be used in InternalMinusOne";
+type MinusABSOneCore<S extends string> = S extends "0"
+  ? "1-"
+  : S extends `${infer Digit extends DigitType}${infer Rest}`
+  ? Digit extends 0
+    ? `9${MinusABSOneCore<Rest>}`
+    : `${[9, 0, 1, 2, 3, 4, 5, 6, 7, 8][Digit]}${Rest}`
+  : never;
 
-type InternalPlusOne<N extends number> =
-  /* Only positive numbers and 0 should be handled, negative numbers should be treated as invalid input */
-  ExtractNumber<N>[0] extends "-"
-    ? "[InternalPlusOne]: Invalid Input"
-    : ReverseString<InternalPlusOneCore<ReverseString<NumberToString<N>>>>;
+type PlusOrMinusABSOneCore<
+  S extends string,
+  Option extends PlusOrMinusOption
+> = Option extends "+" ? PlusABSOneCore<S> : MinusABSOneCore<S>;
 
-type InternalMinusOne<N extends number> =
-  /* Only positive numbers should be handled, 0 and negative numbers should be treated as illegal input */
-  ExtractNumber<N>[0] extends "+"
-    ? ReverseString<InternalMinusOneCore<ReverseString<NumberToString<N>>>>
-    : "[InternalMinusOne]: Invalid Input";
+type PlusOrMinusABSOne<
+  N extends number,
+  Option extends PlusOrMinusOption
+> = ExtractNumber<N>[0] extends "-"
+  ? never
+  : ParseInt<
+      ReverseString<
+        PlusOrMinusABSOneCore<ReverseString<NumberToString<N>>, Option>
+      >
+    >;
 
+type k32 = MinusABSOne<10>;
+type k321 = MinusABSOne<0>;
+type qq1 = PlusABSOne<9>;
+type qfo = PlusABSOne<0>;
+type PlusABSOne<N extends number> = PlusOrMinusABSOne<N, "+">;
+type MinusABSOne<N extends number> = PlusOrMinusABSOne<N, "-">;
+
+// TODO
 type PlusOrMinusOne<
   N extends number,
   Option extends PlusOrMinusOption
 > = ParseInt<
   ExtractNumber<N>[0] extends OptionNOT<Option>
-    ? `${OptionNOT<Option>}${InternalMinusOne<ExtractNumber<N>[1]>}`
-    : `${Option}${InternalPlusOne<ExtractNumber<N>[1]>}`
+    ? `${OptionNOT<Option>}${MinusABSOne<ExtractNumber<N>[1]>}`
+    : `${Option}${PlusABSOne<ExtractNumber<N>[1]>}`
 >;
 
 type MinusOne<N extends number> = PlusOrMinusOne<N, "-">;
