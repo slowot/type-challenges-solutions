@@ -86,7 +86,6 @@ type PreFormatNumber<
   ? Result
   : [ReverseString<Result[0]>, ReverseString<Result[1]>];
 
-// TODO
 type PreFormatNumberCore<
   Left extends string,
   Right extends string,
@@ -101,9 +100,9 @@ type PreFormatNumberCore<
         `${RResult}${RDigit}`
       >
     : PreFormatNumberCore<Left, "0", LResult, RResult>
-  : Right extends `${infer RDigit extends number}${infer RRest}`
-  ? PreFormatNumberCore<"0", Right, LResult, RResult>
-  : [LResult, RResult];
+  : Right extends ""
+  ? [LResult, RResult]
+  : PreFormatNumberCore<"0", Right, LResult, RResult>;
 
 type SimplePlus<
   LeftMinusOne extends number,
@@ -324,7 +323,8 @@ type MinusABSCore<
 type fds = Plus<8944394323791464, 7888788647582928>;
 type mi32 = Minus<894744, 785298>;
 type te32 = Minus<-8944394323791464, 7888788647582928>;
-type ki32 = Minus<3, 23>;
+type ki32 = Minus<3, 32>;
+type kk32 = Plus<3, 32>;
 type f93 = Plus<0, 0>;
 type k912 = CompareABS<84744, 888888>;
 type step2 = PreFormatNumber<3, 32>;
