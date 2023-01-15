@@ -26,6 +26,12 @@ type OptionNOT<Option extends PlusOrMinusOption> = Exclude<
   Option
 >;
 
+type SortNumber<
+  Left extends number,
+  Right extends number,
+  Option extends ">" | "<" = ">"
+> = CompareNumber<Left, Right> extends Option ? [Left, Right] : [Right, Left];
+
 type NegativeNumber<N extends number> =
   NumberToString<N> extends `-${infer Integer extends number}`
     ? Integer
@@ -105,13 +111,14 @@ type PreFormatNumber<
   ? Result
   : [ReverseString<Result[0]>, ReverseString<Result[1]>];
 
+// TODO
 type PreFormatNumberCore<
   Left extends string,
   Right extends string,
   LResult extends string = "",
   RResult extends string = ""
-> = Left extends `${infer LDigit extends number}${infer LRest}`
-  ? Right extends `${infer RDigit extends number}${infer RRest}`
+> = Left extends `${infer LDigit extends DigitType}${infer LRest}`
+  ? Right extends `${infer RDigit extends DigitType}${infer RRest}`
     ? PreFormatNumberCore<
         LRest,
         RRest,
@@ -192,7 +199,7 @@ type Plus<
   ? MinusABS<ExtractABS[1], ExtractABS[0]>
   : ExtractSign extends ["+", "-"]
   ? MinusABS<ExtractABS[0], ExtractABS[1]>
-  : PlusABS<Left, Right>;
+  : PlusABS<ExtractABS[0], ExtractABS[1]>;
 
 type Minus<
   Left extends number,
@@ -215,7 +222,7 @@ type Minus<
   ? NegativeNumber<PlusABS<ExtractABS[0], ExtractABS[1]>>
   : ExtractSign extends ["+", "-"]
   ? PlusABS<ExtractABS[0], ExtractABS[1]>
-  : MinusABS<Left, Right>;
+  : MinusABS<ExtractABS[0], ExtractABS[1]>;
 
 type MinusABS<Left extends number, Right extends number> = CompareABS<
   Left,
@@ -226,18 +233,19 @@ type MinusABS<Left extends number, Right extends number> = CompareABS<
     >
   : ParseInt<ReverseString<MinusABSCore<PreFormatNumber<Left, Right>>>>;
 
+// Left must be bigger than right
 type MinusABSCore<
-  PreFormat extends [string, string],
+  PreFormated extends [string, string],
   Carry extends CarryType = 0
-> = PreFormat[0] extends `${infer LDigit extends DigitType}${infer LRest}`
-  ? PreFormat[1] extends `${infer RDigit extends DigitType}${infer RRest}`
+> = PreFormated[0] extends `${infer LDigit extends DigitType}${infer LRest}`
+  ? PreFormated[1] extends `${infer RDigit extends DigitType}${infer RRest}`
     ? CalculateDigit<LDigit, RDigit, Carry, "-"> extends [
         infer NewCarry extends CarryType,
         infer NewDigit extends DigitType
       ]
       ? `${NewDigit}${MinusABSCore<[LRest, RRest], NewCarry>}`
-      : "Error: never" /* 不可能走入此分支，此步只是为了存储 CalculateDigit 的结果 */
-    : "Error: never" /* 两个字符串已预处理为等长 不可能出现这种情况 */
+      : never
+    : never
   : "";
 
 type DigitType = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
@@ -293,25 +301,21 @@ type CompareABS<
     ? CompareDigit<LDigit, RDigit> extends "="
       ? CompareABS<Left, Right, [LRest, RRest]>
       : CompareDigit<LDigit, RDigit>
-    : ">" /* 两个字符串已预处理为等长 不可能出现这种情况 */
-  : "="; /* 两数相等，不可能出现此情况，最开始已经判断了左右是否相等。*/
-
-type SortNumber<
-  Left extends number,
-  Right extends number,
-  Option extends ">" | "<" = ">" // 默认降序
-> = CompareNumber<Left, Right> extends Option ? [Left, Right] : [Right, Left];
+    : never
+  : never;
 
 type PlusABSCore<
   PreFormated extends [string, string],
   Carry extends CarryType = 0
 > = PreFormated[0] extends `${infer LDigit extends DigitType}${infer LRest}`
   ? PreFormated[1] extends `${infer RDigit extends DigitType}${infer RRest}`
-    ? `${CalculateDigit<LDigit, RDigit, Carry, "+">[1]}${PlusABSCore<
-        [LRest, RRest],
-        CalculateDigit<LDigit, RDigit, Carry, "+">[0]
-      >}`
-    : "Error: never" /* 两个字符串已预处理为等长 不可能出现这种情况 */
+    ? CalculateDigit<LDigit, RDigit, Carry, "+"> extends [
+        infer NewCarry extends CarryType,
+        infer NewDigit extends DigitType
+      ]
+      ? `${NewDigit}${PlusABSCore<[LRest, RRest], NewCarry>}`
+      : never
+    : never
   : Carry extends 1
   ? "1"
   : "";
@@ -321,7 +325,7 @@ type mi32 = Minus<894744, 785298>;
 type te32 = Minus<-8944394323791464, 7888788647582928>;
 type ki32 = Minus<4, 4>;
 type f93 = Plus<0, 0>;
-type k912 = CompareABS<894744, 888888>;
+type k912 = CompareABS<84744, 888888>;
 type step1 = PreFormatNumberCore<"3", "23">;
 type fk323 = SortNumber<-99, 999>;
 type fsd23334 = SortNumber<46, 45, "<">;
