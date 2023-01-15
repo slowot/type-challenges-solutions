@@ -230,9 +230,10 @@ type PlusOrMinusOne<
 type MinusOne<N extends number> = PlusOrMinusOne<N, "-">;
 type PlusOne<N extends number> = PlusOrMinusOne<N, "+">;
 
-type Plus<
+type PlusOrMinus<
   Left extends number,
   Right extends number,
+  Option extends PlusOrMinusOption,
   ExtractSign extends [SignType, SignType] = [
     ExtractNumber<Left>[0],
     ExtractNumber<Right>[0]
@@ -242,83 +243,85 @@ type Plus<
     ExtractNumber<Right>[1]
   ]
 > = Left extends 0
-  ? Right
+  ? Option extends "+"
+    ? Right
+    : NegativeNumber<Right>
   : Right extends 0
   ? Left
   : ExtractSign extends ["-", "-"]
-  ? NegativeNumber<PlusABS<ExtractABS[0], ExtractABS[1]>>
+  ? Option extends "+"
+    ? NegativeNumber<PlusABS<ExtractABS[0], ExtractABS[1]>>
+    : MinusABS<ExtractABS[1], ExtractABS[0]>
   : ExtractSign extends ["-", "+"]
-  ? MinusABS<ExtractABS[1], ExtractABS[0]>
+  ? Option extends "+"
+    ? MinusABS<ExtractABS[1], ExtractABS[0]>
+    : NegativeNumber<PlusABS<ExtractABS[0], ExtractABS[1]>>
   : ExtractSign extends ["+", "-"]
-  ? MinusABS<ExtractABS[0], ExtractABS[1]>
-  : PlusABS<ExtractABS[0], ExtractABS[1]>;
+  ? PlusOrMinusABS<ExtractABS[0], ExtractABS[1], OptionNOT<Option>>
+  : PlusOrMinusABS<ExtractABS[0], ExtractABS[1], Option>;
 
-type Minus<
-  Left extends number,
-  Right extends number,
-  ExtractSign extends [SignType, SignType] = [
-    ExtractNumber<Left>[0],
-    ExtractNumber<Right>[0]
-  ],
-  ExtractABS extends [number, number] = [
-    ExtractNumber<Left>[1],
-    ExtractNumber<Right>[1]
-  ]
-> = Left extends 0
-  ? NegativeNumber<Right>
-  : Right extends 0
-  ? Left
-  : ExtractSign extends ["-", "-"]
-  ? MinusABS<ExtractABS[1], ExtractABS[0]>
-  : ExtractSign extends ["-", "+"]
-  ? NegativeNumber<PlusABS<ExtractABS[0], ExtractABS[1]>>
-  : ExtractSign extends ["+", "-"]
-  ? PlusABS<ExtractABS[0], ExtractABS[1]>
-  : MinusABS<ExtractABS[0], ExtractABS[1]>;
-
-type PlusABS<Left extends number, Right extends number> = ParseInt<
-  ReverseString<PlusABSCore<PreFormatNumber<Left, Right>>>
+type Plus<Left extends number, Right extends number> = PlusOrMinus<
+  Left,
+  Right,
+  "+"
+>;
+type Minus<Left extends number, Right extends number> = PlusOrMinus<
+  Left,
+  Right,
+  "-"
 >;
 
-type MinusABS<Left extends number, Right extends number> = CompareABS<
-  Left,
-  Right
-> extends "<"
+type PlusOrMinusABS<
+  Left extends number,
+  Right extends number,
+  Option extends PlusOrMinusOption
+> = Option extends "+"
+  ? ParseInt<ReverseString<PlusABSCore<PreFormatNumber<Left, Right>>>>
+  : CompareABS<Left, Right> extends "<"
   ? NegativeNumber<
       ParseInt<ReverseString<MinusABSCore<PreFormatNumber<Right, Left>>>>
     >
   : ParseInt<ReverseString<MinusABSCore<PreFormatNumber<Left, Right>>>>;
 
-type PlusABSCore<
+type PlusABS<Left extends number, Right extends number> = PlusOrMinusABS<
+  Left,
+  Right,
+  "+"
+>;
+
+type MinusABS<Left extends number, Right extends number> = PlusOrMinusABS<
+  Left,
+  Right,
+  "-"
+>;
+
+type PlusOrMinusABSCore<
   PreFormated extends [string, string],
+  Option extends PlusOrMinusOption,
   Carry extends CarryType = 0
 > = PreFormated[0] extends `${infer LDigit extends DigitType}${infer LRest}`
   ? PreFormated[1] extends `${infer RDigit extends DigitType}${infer RRest}`
-    ? CalculateDigit<LDigit, RDigit, Carry, "+"> extends [
+    ? CalculateDigit<LDigit, RDigit, Carry, Option> extends [
         infer NewCarry extends CarryType,
         infer NewDigit extends DigitType
       ]
-      ? `${NewDigit}${PlusABSCore<[LRest, RRest], NewCarry>}`
+      ? `${NewDigit}${PlusOrMinusABSCore<[LRest, RRest], Option, NewCarry>}`
       : never
     : never
   : Carry extends 1
   ? "1"
   : "";
 
+type PlusABSCore<PreFormated extends [string, string]> = PlusOrMinusABSCore<
+  PreFormated,
+  "+"
+>;
+
 // Left must be bigger than right
-type MinusABSCore<
-  PreFormated extends [string, string],
-  Carry extends CarryType = 0
-> = PreFormated[0] extends `${infer LDigit extends DigitType}${infer LRest}`
-  ? PreFormated[1] extends `${infer RDigit extends DigitType}${infer RRest}`
-    ? CalculateDigit<LDigit, RDigit, Carry, "-"> extends [
-        infer NewCarry extends CarryType,
-        infer NewDigit extends DigitType
-      ]
-      ? `${NewDigit}${MinusABSCore<[LRest, RRest], NewCarry>}`
-      : never
-    : never
-  : "";
+type MinusABSCore<PreFormated extends [string, string]> = PlusOrMinusABSCore<
+  PreFormated,
+  "-"
+>;
 
 type fds = Plus<8944394323791464, 7888788647582928>;
 type mi32 = Minus<894744, 785298>;
