@@ -103,18 +103,10 @@ type StringToUnion<S extends string> = S extends `${infer First}${infer Rest}`
   ? First | StringToUnion<Rest>
   : "";
 
-type Contain<
-  Left extends string,
-  Right extends string
-> = Left extends `${infer _}${Right}${infer _}` ? true : false;
-
 type AllCombinations<
   S extends string,
-  U extends string = "",
-  Iterator extends string = StringToUnion<S>,
-  Result extends string = Iterator extends Iterator
-    ? U extends U
-      ? `${Iterator}${Contain<U, Iterator> extends true ? never : U}`
-      : never
-    : never
-> = S extends Result ? Result : Result | AllCombinations<S, Result>;
+  U extends string = StringToUnion<S>,
+  Iterator extends string = U
+> = Iterator extends Iterator
+  ? Iterator | `${Iterator}${AllCombinations<S, Exclude<U, Iterator>>}`
+  : never;
