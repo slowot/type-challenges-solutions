@@ -10,13 +10,11 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
-type LastIndexOf<
-  A extends Array<unknown>,
-  Element,
-  Temp extends Array<unknown> = [],
-  Result extends number = -1
-> = A extends [infer First, ...infer Rest]
-  ? Equal<First, Element> extends true
-    ? LastIndexOf<Rest, Element, [...Temp, First], Temp["length"]>
-    : LastIndexOf<Rest, Element, [...Temp, First], Result>
-  : Result;
+type LastIndexOf<A extends Array<unknown>, Element> = A extends [
+  ...infer Rest,
+  infer Last
+]
+  ? Equal<Last, Element> extends true
+    ? Rest["length"]
+    : LastIndexOf<Rest, Element>
+  : -1;
