@@ -1,6 +1,5 @@
 // ============= Test Cases =============
 import type { Equal, Expect } from "./test-utils";
-import { PlusOne } from "./utils";
 
 type cases = [
   Expect<Equal<Fill<[], 0>, []>>,
@@ -23,10 +22,10 @@ type Fill<
   Start extends number = 0,
   End extends number = A["length"],
   Result extends Array<unknown> = []
-> = Start extends End
+> = Result["length"] extends End
   ? [...Result, ...A]
   : A extends [infer First, ...infer Rest]
-  ? Result["length"] extends Start
-    ? Fill<Rest, Element, PlusOne<Start>, End, [...Result, Element]>
+  ? Start extends Result["length"] | 0
+    ? Fill<Rest, Element, 0, End, [...Result, Element]>
     : Fill<Rest, Element, Start, End, [...Result, First]>
   : Result;
