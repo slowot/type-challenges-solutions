@@ -12,10 +12,9 @@ type cases = [
 // ============= Your Code Here =============
 type Zip<
   Left extends Array<unknown>,
-  Right extends Array<unknown>,
-  Result extends Array<unknown> = []
+  Right extends Array<unknown>
 > = Left extends [infer LFirst, ...infer LRest]
   ? Right extends [infer RFirst, ...infer RRest]
-    ? Zip<LRest, RRest, [...Result, [LFirst, RFirst]]>
-    : Result
-  : Result;
+    ? [[LFirst, RFirst], ...Zip<LRest, RRest>]
+    : []
+  : [];
