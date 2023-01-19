@@ -8,17 +8,10 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
-type TupleToUnion<A extends Array<unknown>> = A extends [
-  infer First,
-  ...infer Rest
-]
-  ? First | TupleToUnion<Rest>
-  : never;
-
 type Without<
   A extends Array<unknown>,
   Remove,
-  Union = Remove extends Array<unknown> ? TupleToUnion<Remove> : Remove
+  Union = Remove extends Array<unknown> ? Remove[number] : Remove
 > = A extends [infer First, ...infer Rest]
   ? First extends Union
     ? Without<Rest, Remove, Union>
