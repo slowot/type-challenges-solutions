@@ -1,0 +1,34 @@
+// ============= Test Cases =============
+import type { Equal, Expect } from "./test-utils";
+import type { Last } from "./utils";
+
+type cases = [
+  Expect<Equal<GetMiddleElement<[]>, []>>,
+  Expect<Equal<GetMiddleElement<[1, 2, 3, 4, 5]>, [3]>>,
+  Expect<Equal<GetMiddleElement<[1, 2, 3, 4, 5, 6]>, [3, 4]>>,
+  Expect<Equal<GetMiddleElement<[() => string]>, [() => string]>>,
+  Expect<
+    Equal<GetMiddleElement<[() => number, "3", [3, 4], 5]>, ["3", [3, 4]]>
+  >,
+  Expect<
+    Equal<
+      GetMiddleElement<[() => string, () => number]>,
+      [() => string, () => number]
+    >
+  >,
+  Expect<Equal<GetMiddleElement<[never]>, [never]>>
+];
+// @ts-expect-error
+type error = GetMiddleElement<1, 2, 3>;
+
+// ============= Your Code Here =============
+type GetMiddleElement<
+  A extends Array<unknown>,
+  Buffer extends Array<unknown> = []
+> = A extends [infer Head, ...infer Rest]
+  ? Buffer["length"] extends A["length"]
+    ? [Last<Buffer>, Head]
+    : Buffer["length"] extends Rest["length"]
+    ? [Head]
+    : GetMiddleElement<Rest, [...Buffer, Head]>
+  : [];
