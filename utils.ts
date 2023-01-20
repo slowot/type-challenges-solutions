@@ -322,3 +322,8 @@ type MinusABSCore<PreFormated extends [string, string]> = PlusOrMinusABSCore<
   PreFormated,
   "-"
 >;
+
+export type Contains<
+  S extends String,
+  Element extends string
+> = S extends `${string}${Element}${string}` ? true : false;
