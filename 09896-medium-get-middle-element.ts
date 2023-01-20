@@ -22,13 +22,11 @@ type cases = [
 type error = GetMiddleElement<1, 2, 3>;
 
 // ============= Your Code Here =============
-type GetMiddleElement<
-  A extends Array<unknown>,
-  Buffer extends Array<unknown> = []
-> = A extends [infer Head, ...infer Rest]
-  ? Buffer["length"] extends A["length"]
-    ? [Last<Buffer>, Head]
-    : Buffer["length"] extends Rest["length"]
-    ? [Head]
-    : GetMiddleElement<Rest, [...Buffer, Head]>
-  : [];
+type GetMiddleElement<A extends Array<unknown>> = A extends [
+  infer _,
+  infer Mid,
+  ...infer Rest,
+  infer _
+]
+  ? GetMiddleElement<[Mid, ...Rest]>
+  : A;
