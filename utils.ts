@@ -327,3 +327,11 @@ export type Contains<
   S extends String,
   Element extends string
 > = S extends `${string}${Element}${string}` ? true : false;
+
+export type Last<A extends Array<unknown>> = A extends [...infer _, infer Tail]
+  ? Tail
+  : never;
+
+export type First<A extends Array<unknown>> = A extends [infer Head, ...infer _]
+  ? Head
+  : never;
