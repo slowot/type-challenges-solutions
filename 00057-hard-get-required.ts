@@ -9,13 +9,9 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
-type RemoveOptional<T extends Record<keyof any, unknown>> = {
-  [K in keyof T]-?: T[K];
-};
-
 type GetRequired<
   O extends Record<keyof any, unknown>,
-  T = RemoveOptional<O>
+  T extends O = Required<O>
 > = {
-  [K in keyof (O | T) as O[K] extends T[K] ? K : never]: O[K];
+  [K in keyof O as O[K] extends T[K] ? K : never]: O[K];
 };
