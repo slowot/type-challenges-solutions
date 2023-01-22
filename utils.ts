@@ -335,3 +335,13 @@ export type Last<A extends Array<unknown>> = A extends [...infer _, infer Tail]
 export type First<A extends Array<unknown>> = A extends [infer Head, ...infer _]
   ? Head
   : never;
+
+export type IsChar<S extends string> = S extends `${infer _}${infer Rest}`
+  ? Rest extends ""
+    ? true
+    : false
+  : false;
+
+export type IsLetter<S extends string> = Uppercase<S> extends Lowercase<S>
+  ? false
+  : IsChar<S>;
