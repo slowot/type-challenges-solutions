@@ -7,9 +7,6 @@ type cases = [
 ];
 
 // ============= Your Code Here =============
-type TupleToUnion<T extends Array<unknown>> = T extends [
-  infer ElementType,
-  ...infer rest
-]
-  ? ElementType | TupleToUnion<rest>
-  : never;
+type TupleToUnion<A, ErrorOutput = never> = A extends Array<infer T>
+  ? T
+  : ErrorOutput;
