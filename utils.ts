@@ -56,7 +56,7 @@ type RemoveExtraChar<S extends string> = S extends `${SignType}0`
   ? `${Integer}`
   : S;
 
-type ParseInt<S extends string> =
+export type ParseInt<S extends string> =
   RemoveExtraChar<S> extends `${infer Integer extends number}`
     ? Integer
     : never;
