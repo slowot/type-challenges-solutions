@@ -1,3 +1,5 @@
+import { Equal } from "./test-utils";
+
 type PlusOrMinusOption = "+" | "-";
 type SignType = "" | "-" | "+";
 type ExtractNumberType = ["", 0] | ["-" | "+", number];
@@ -345,3 +347,20 @@ export type IsChar<S extends string> = S extends `${infer _}${infer Rest}`
 export type IsLetter<S extends string> = Uppercase<S> extends Lowercase<S>
   ? false
   : IsChar<S>;
+
+export type ArrayRemove<A extends Array<unknown>, Element> = A extends [
+  infer Head,
+  ...infer Rest
+]
+  ? [
+      ...(Equal<Head, Element> extends true ? [] : [Head]),
+      ...ArrayRemove<Rest, Element>
+    ]
+  : [];
+
+export type ArrayFilterOut<
+  A extends Array<unknown>,
+  R extends Array<unknown>
+> = R extends [infer Head, ...infer Rest]
+  ? ArrayFilterOut<ArrayRemove<A, Head>, Rest>
+  : A;
